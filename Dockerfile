@@ -14,3 +14,4 @@ WORKDIR /root
 
 # أمر ضروري لمنع الحاوية من التوقف
 CMD ["tail", "-f", "/dev/null"]
+CMD ["/usr/local/x-ui/x-ui"]
