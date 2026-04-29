@@ -1,14 +1,13 @@
 FROM alpine:latest
 
-# حزم أساسية فقط (لا نحتاج gettext)
 RUN apk add --no-cache curl openssl bash
 
-# تحميل Hysteria 2
+# تنزيل Hysteria 2
 RUN curl -L -o /usr/local/bin/hysteria \
     https://github.com/apernet/hysteria/releases/download/app/v2.6.1/hysteria-linux-amd64 && \
     chmod +x /usr/local/bin/hysteria
 
-# تحميل udp2raw
+# تنزيل udp2raw
 RUN mkdir /tmp/udp2raw && \
     curl -L -o /tmp/udp2raw/udp2raw.tar.gz \
     https://github.com/wangyu-/udp2raw-tunnel/releases/download/20230206.0/udp2raw_binaries.tar.gz && \
@@ -17,7 +16,7 @@ RUN mkdir /tmp/udp2raw && \
     chmod +x /usr/local/bin/udp2raw && \
     rm -rf /tmp/udp2raw
 
-# شهادة ذاتية لـ TLS
+# إنشاء شهادة موقعة ذاتياً
 RUN mkdir -p /etc/hysteria && \
     openssl req -x509 -newkey rsa:2048 -nodes \
     -keyout /etc/hysteria/private.key \
