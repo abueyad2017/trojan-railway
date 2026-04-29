@@ -1,53 +1,24 @@
 #!/bin/bash
 
-mkdir -p /etc/xray
+# قراءة كلمة السر من متغيرات البيئة (أو تعيين افتراضي)
+PASSWORD=${PASSWORD:-"change-me"}
 
-# إنشاء شهادة TLS داخلية
-openssl req -x509 -nodes -newkey rsa:2048 \
--keyout /etc/xray/key.pem \
--out /etc/xray/cert.pem \
--days 3650 \
--subj "/CN=www.cloudflare.com"
+# استبدال المتغير في القالب
+export PASSWORD
+envsubst < /etc/hysteria/config.yaml.template > /etc/hysteria/config.yaml
 
-PORT=${PORT:-443}
-PASS=${PASSWORD:-123456}
+echo "Starting Hysteria 2 on UDP 2000..."
+hysteria server -c /etc/hysteria/config.yaml &
 
-cat > /etc/xray/config.json <<EOF
-{
-  "log": {
-    "loglevel": "warning"
-  },
-  "inbounds": [
-    {
-      "port": ${PORT},
-      "protocol": "trojan",
-      "settings": {
-        "clients": [
-          {
-            "password": "${PASS}"
-          }
-        ]
-      },
-      "streamSettings": {
-        "network": "tcp",
-        "security": "tls",
-        "tlsSettings": {
-          "certificates": [
-            {
-              "certificateFile": "/etc/xray/cert.pem",
-              "keyFile": "/etc/xray/key.pem"
-            }
-          ]
-        }
-      }
-    }
-  ],
-  "outbounds": [
-    {
-      "protocol": "freedom"
-    }
-  ]
-}
-EOF
+# الانتظار قليلاً للتأكد من بدء Hysteria
+sleep 2
 
-exec xray run -c /etc/xray/config.json
+echo "Starting udp2raw tunnel: TCP 0.0.0.0:9000 -> UDP 127.0.0.1:2000"
+udp2raw --server --listen 0.0.0.0:9000 \
+        --remote 127.0.0.1:2000 \
+        --raw-mode faketcp \
+        --log-level 1
+
+# إذا تعطل أحدهم نوقف الحاوية
+wait -n
+exit $?
