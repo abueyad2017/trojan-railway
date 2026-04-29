@@ -1,20 +1,12 @@
-# استخدام نسخة Alpine الحديثة والمستقرة
-FROM python:3.11-alpine
+FROM debian:stable-slim
 
-# تثبيت المتطلبات (curl, openssl, bash) في سطر واحد سريع
-RUN apk add --no-cache curl openssl bash
+RUN apt-get update && apt-get install -y curl ca-certificates bash && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
+RUN curl -fsSL https://get.hy2.sh/ | bash
 
-# تحميل وحش السرعة Hysteria2 مباشرة
-RUN curl -Lo /app/hysteria https://github.com/apernet/hysteria/releases/latest/download/hysteria-linux-amd64 && \
-    chmod +x /app/hysteria
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# نسخ ملفاتك (index.html و entrypoint.sh)
-COPY . .
+EXPOSE 443
 
-# منح صلاحيات التشغيل
-RUN chmod +x entrypoint.sh
-
-# السيرفر سيعتمد على المنفذ الذي يحدده Railway تلقائياً
-CMD ["./entrypoint.sh"]
+CMD ["/entrypoint.sh"]
